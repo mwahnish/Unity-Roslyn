@@ -15,23 +15,25 @@ public class AutocompleteRunner
     {
         AdhocWorkspace workspace = new AdhocWorkspace();
 
-        var compilationOptions = new CSharpCompilationOptions(
+        CSharpCompilationOptions compilationOptions = new CSharpCompilationOptions(
            OutputKind.DynamicallyLinkedLibrary,
-           usings: new[] { "System" });
+           usings: new[] { "System", "System.Collections", "System.Collections.Generic","UnityEngine"
+        });
 
-        var scriptProjectInfo = ProjectInfo.Create(ProjectId.CreateNewId(), VersionStamp.Create(), "Script", "Script", LanguageNames.CSharp, isSubmission: true)
+        
+        ProjectInfo scriptProjectInfo = ProjectInfo.Create(ProjectId.CreateNewId(), VersionStamp.Create(), "Script", "Script", LanguageNames.CSharp, isSubmission: true)
            .WithMetadataReferences(new[]
            {
        MetadataReference.CreateFromFile(typeof(object).Assembly.Location)
            })
            .WithCompilationOptions(compilationOptions);
 
-        var scriptProject = workspace.AddProject(scriptProjectInfo);
-        var scriptDocumentInfo = DocumentInfo.Create(
+        Project scriptProject = workspace.AddProject(scriptProjectInfo);
+        DocumentInfo scriptDocumentInfo = DocumentInfo.Create(
             DocumentId.CreateNewId(scriptProject.Id), "Script",
             sourceCodeKind: SourceCodeKind.Script,
             loader: TextLoader.From(TextAndVersion.Create(SourceText.From(data), VersionStamp.Create())));
-        var scriptDocument = workspace.AddDocument(scriptDocumentInfo);
+        Document scriptDocument = workspace.AddDocument(scriptDocumentInfo);
 
         // cursor position is at the end
         

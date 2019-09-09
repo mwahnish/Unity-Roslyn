@@ -31,8 +31,10 @@ public class ScriptRunner
         {
             options = ScriptOptions.Default;
             options = DoStandardImports(options);
-            options = LoadAllDllsInFolder(options, "F:/Program Files/Unity Editors/2019.1.12f1/Editor/Data/Managed/UnityEngine/");
-            options = LoadAllDllsInFolder(options, "F:/ABXY/Client Work/DigitalCM/Roslyn-Unity/Library/ScriptAssemblies");
+            //F:/Program Files/Unity Editors/2019.1.12f1/Editor/Data/Managed/UnityEngine/
+            options = LoadAllDllsInFolder(options, Path.Combine(Path.GetDirectoryName(EditorApplication.applicationPath), "Data", "Managed", "UnityEngine"));
+            //F:/ABXY/Client Work/DigitalCM/Roslyn-Unity/Library/ScriptAssemblies
+            options = LoadAllDllsInFolder(options, Path.Combine(Application.dataPath, @"../","Library","ScriptAssemblies"));
             
         }
         
