@@ -1,5 +1,6 @@
 ﻿using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.Completion;
+using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.Text;
 using System.Collections;
 using System.Collections.Generic;
@@ -13,13 +14,33 @@ public class AutocompleteRunner
     public static CompletionList Autocomplete(string data, int position)
     {
         AdhocWorkspace workspace = new AdhocWorkspace();
-        ProjectInfo projectInfo = ProjectInfo.Create(ProjectId.CreateNewId(), VersionStamp.Create(), "Autocompleter", "Autocompleter", LanguageNames.CSharp);
-        Project project = workspace.AddProject(projectInfo);
-        Document document = workspace.AddDocument(project.Id, "Autocomplete.cs", SourceText.From(data));
-        CompletionService completer= CompletionService.GetService(document);
-        Task<CompletionList> result = completer.GetCompletionsAsync(document, position);
-        result.Wait();
-        return result.Result;
+
+        var compilationOptions = new CSharpCompilationOptions(
+           OutputKind.DynamicallyLinkedLibrary,
+           usings: new[] { "System" });
+
+        var scriptProjectInfo = ProjectInfo.Create(ProjectId.CreateNewId(), VersionStamp.Create(), "Script", "Script", LanguageNames.CSharp, isSubmission: true)
+           .WithMetadataReferences(new[]
+           {
+       MetadataReference.CreateFromFile(typeof(object).Assembly.Location)
+           })
+           .WithCompilationOptions(compilationOptions);
+
+        var scriptProject = workspace.AddProject(scriptProjectInfo);
+        var scriptDocumentInfo = DocumentInfo.Create(
+            DocumentId.CreateNewId(scriptProject.Id), "Script",
+            sourceCodeKind: SourceCodeKind.Script,
+            loader: TextLoader.From(TextAndVersion.Create(SourceText.From(data), VersionStamp.Create())));
+        var scriptDocument = workspace.AddDocument(scriptDocumentInfo);
+
+        // cursor position is at the end
+        
+
+        var completionService = CompletionService.GetService(scriptDocument);
+        Task<CompletionList> results = completionService.GetCompletionsAsync(scriptDocument, position -1);
+        
+
+        return results.Result;
     }
 
     // Update is called once per frame
