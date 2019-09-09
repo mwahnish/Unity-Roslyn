@@ -24,7 +24,9 @@ public class ScriptRunner
 
     public static object Execute(string code, object target)
     {
-        
+        if (target != null)
+            code = code.Replace("selection.", "((" + target.GetType() + ")selection).");
+
         if (options == null)
         {
             options = ScriptOptions.Default;
@@ -34,7 +36,7 @@ public class ScriptRunner
             
         }
         
-        var globals = new Globals { target = target };
+        var globals = new Globals { selection = target };
         scriptState = scriptState == null ? CSharpScript.RunAsync(code,options,globals:globals, globalsType: typeof(Globals)).Result : scriptState.ContinueWithAsync(code, options).Result;
         if (scriptState.ReturnValue != null && !string.IsNullOrEmpty(scriptState.ReturnValue.ToString()))
             return scriptState.ReturnValue;
@@ -43,7 +45,7 @@ public class ScriptRunner
 
     public class Globals
     {
-        public object target;
+        public object selection;
     }
 
     public static object Execute(string code)
