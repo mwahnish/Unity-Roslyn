@@ -21,6 +21,8 @@ public class AutocompleteRunner
     Document scriptDocument;
     TextAndVersion autocompleteText;
     CompletionService completionService;*/
+
+    public string lastToken { get; private set; }
     List<MetadataReference> references;
     public AutocompleteRunner()
     {
@@ -77,7 +79,7 @@ public class AutocompleteRunner
 
             results.Wait();
             List<CompletionItem> filteredItems = new List<CompletionItem>();
-            
+            lastToken = currentToken.ToString();
             if (results.Result != null)
                 filteredItems = new List<CompletionItem>( completionService.FilterItems(scriptDocument, results.Result.Items, currentToken.ToString()));
 
