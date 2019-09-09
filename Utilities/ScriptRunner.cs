@@ -24,8 +24,8 @@ public class ScriptRunner
 
     public static object Execute(string code, object selection)
     {
-        if (target != null)
-            code = code.Replace("selection.", "((" + target.GetType() + ")selection).");
+        if (selection != null)
+            code = code.Replace("selection.", "((" + selection.GetType() + ")selection).");
 
         if (options == null)
         {
