@@ -1,0 +1,17 @@
+{
+    "name": "Roslyn-Utilities",
+    "references": [
+        "GUID:2c454dfe0ac951540ae076f0e389e0eb"
+    ],
+    "optionalUnityReferences": [],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": []
+}

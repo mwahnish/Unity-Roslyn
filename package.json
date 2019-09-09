@@ -1,0 +1,11 @@
+{
+    "name": "com.abxy.rosyln",
+    "displayName": "Roslyn libraries in Unity",
+    "version": "0.0.1",
+    "unity": "2018.1",
+    "description": "It's Roslyn!",
+    "keywords": [
+        "csharp"
+    ],
+    "category": "Unity"
+}
