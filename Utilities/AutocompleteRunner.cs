@@ -11,6 +11,7 @@ using System.Linq;
 using System.IO;
 using UnityEditor;
 using Microsoft.CodeAnalysis.Scripting;
+using System.Threading;
 
 public class AutocompleteRunner
 {
@@ -24,6 +25,12 @@ public class AutocompleteRunner
     CompletionService completionService;*/
     
     List<MetadataReference> references;
+
+    public List<CompletionItem> completions { get; private set; }
+
+    Task potentialsTask;
+    CancellationTokenSource tokenSource;
+
     public AutocompleteRunner()
     {
 
@@ -35,21 +42,33 @@ public class AutocompleteRunner
         references = LoadAllDllsInFolder(references, Path.Combine(Path.GetDirectoryName(editorPath), "Data", "Managed", "UnityEngine"));
         references = LoadAllDllsInFolder(references, Path.Combine(applicationPath, @"../", "Library", "ScriptAssemblies"));
         references.Add(MetadataReference.CreateFromFile(typeof(object).Assembly.Location));
-
+        completions = new List<CompletionItem>();
     }
 
-    public async void GetParameters(string text, int position, List<ScriptVariable> otherVars, System.Action<List<CompletionItem>> result)
+    public void LoadPotentials(string text, int position, List<ScriptVariable> otherVars)
     {
-        string preword = "public GameObject selection;";
-        foreach(ScriptVariable var in otherVars)
-        {
-            preword += "public " + var.Type + " " + var.Name + ";";
-        }
+        if (potentialsTask != null && tokenSource != null)
+            tokenSource.Cancel();
 
+        tokenSource = new CancellationTokenSource();
+        CancellationToken token = tokenSource.Token;
+        potentialsTask = GetPotentials(text, position, otherVars,token);
+    }
 
-        text = preword + text ;
-        position += preword.Length;
+    private async Task GetPotentials(string text, int position, List<ScriptVariable> otherVars, CancellationToken token)
+    {
         await Task.Run(() => {
+            string preword = "public GameObject selection;";
+            foreach (ScriptVariable var in otherVars)
+            {
+                preword += "public " + var.Type + " " + var.Name + ";";
+            }
+
+            if (token.IsCancellationRequested)
+                return;
+
+            text = preword + text;
+            position += preword.Length;
             var host = MefHostServices.Create(MefHostServices.DefaultAssemblies);
             
             var workspace = new AdhocWorkspace(host);
@@ -59,36 +78,46 @@ public class AutocompleteRunner
                 usings: new[] { "UnityEngine", "System.Collections", "System.Collections.Generic" });
             //compilationOptions.WithUsings("UnityEngine", "System.Collections", "System.Collections.Generic");
 
-            
+            if (token.IsCancellationRequested)
+                return;
 
             var scriptProjectInfo = ProjectInfo.Create(ProjectId.CreateNewId(), VersionStamp.Create(), "Script", "Script", LanguageNames.CSharp,
                     isSubmission: true)
                 .WithMetadataReferences(references)
                 .WithCompilationOptions(compilationOptions);
-            
+
+            if (token.IsCancellationRequested)
+                return;
 
             var scriptProject = workspace.AddProject(scriptProjectInfo);
+
+            if (token.IsCancellationRequested)
+                return;
 
             var scriptDocumentInfo = DocumentInfo.Create(
                 DocumentId.CreateNewId(scriptProject.Id), "Script",
                 sourceCodeKind: SourceCodeKind.Script,
                 loader: TextLoader.From(TextAndVersion.Create(SourceText.From(text), VersionStamp.Create())));
+
+            if (token.IsCancellationRequested)
+                return;
+
             var scriptDocument = workspace.AddDocument(scriptDocumentInfo);
             var completionService = CompletionService.GetService(scriptDocument);
 
-            Task<Microsoft.CodeAnalysis.SyntaxNode> tree= scriptDocument.GetSyntaxRootAsync();
+            Task<Microsoft.CodeAnalysis.SyntaxNode> tree= scriptDocument.GetSyntaxRootAsync(token);
             tree.Wait();
 
             SyntaxToken currentToken= tree.Result.FindToken(Mathf.Clamp( position-1, 0, int.MaxValue));
             
-            Task<CompletionList> results =  completionService.GetCompletionsAsync(scriptDocument, Mathf.Clamp(position, 0, int.MaxValue));
+            Task<CompletionList> results =  completionService.GetCompletionsAsync(scriptDocument, Mathf.Clamp(position, 0, int.MaxValue),cancellationToken:token);
 
             results.Wait();
             List<CompletionItem> filteredItems = new List<CompletionItem>();
             if (results.Result != null)
                 filteredItems = new List<CompletionItem>( completionService.FilterItems(scriptDocument, results.Result.Items, currentToken.ToString()));
 
-            result?.Invoke(filteredItems);
+            completions = filteredItems;
         });
         
     }
