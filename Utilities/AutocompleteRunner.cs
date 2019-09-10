@@ -12,6 +12,7 @@ using System.IO;
 using UnityEditor;
 using Microsoft.CodeAnalysis.Scripting;
 using System.Threading;
+using System.Text.RegularExpressions;
 
 public class AutocompleteRunner
 {
@@ -202,7 +203,7 @@ public class AutocompleteRunner
     private List<CompletionItem> Filter(List<CompletionItem> fullList, string filter)
     {
         List<CompletionItem> completions = new List<CompletionItem>();
-        if (filter != ".")
+        if (Regex.IsMatch(filter, "[a-z0-9]"))
             completions = new List<CompletionItem>(fullList.Where<CompletionItem>(x => x.FilterText.ToLower().StartsWith(filter.ToLower())));
         else
             completions = fullList;
