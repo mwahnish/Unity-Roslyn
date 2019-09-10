@@ -14,29 +14,22 @@ public class ScriptRunner
     private static ScriptState<object> scriptState = null;
     private static ScriptOptions options = null;
     
-
-    // Update is called once per frame
-    void Update()
+    public ScriptRunner()
     {
-        
-        //Debug.Log();
+        options = ScriptOptions.Default;
+        options = DoStandardImports(options);
+        //F:/Program Files/Unity Editors/2019.1.12f1/Editor/Data/Managed/UnityEngine/
+        options = LoadAllDllsInFolder(options, Path.Combine(Path.GetDirectoryName(EditorApplication.applicationPath), "Data", "Managed", "UnityEngine"));
+        //F:/ABXY/Client Work/DigitalCM/Roslyn-Unity/Library/ScriptAssemblies
+        options = LoadAllDllsInFolder(options, Path.Combine(Application.dataPath, @"../", "Library", "ScriptAssemblies"));
     }
-
-    public static object Execute(string code, object selection)
+    
+    public object Execute(string code, object selection)
     {
         if (selection != null)
             code = code.Replace("selection.", "((" + selection.GetType() + ")selection).");
 
-        if (options == null)
-        {
-            options = ScriptOptions.Default;
-            options = DoStandardImports(options);
-            //F:/Program Files/Unity Editors/2019.1.12f1/Editor/Data/Managed/UnityEngine/
-            options = LoadAllDllsInFolder(options, Path.Combine(Path.GetDirectoryName(EditorApplication.applicationPath), "Data", "Managed", "UnityEngine"));
-            //F:/ABXY/Client Work/DigitalCM/Roslyn-Unity/Library/ScriptAssemblies
-            options = LoadAllDllsInFolder(options, Path.Combine(Application.dataPath, @"../","Library","ScriptAssemblies"));
-            
-        }
+        
         
         var globals = new Globals { selection = selection };
         scriptState = scriptState == null ? CSharpScript.RunAsync(code,options,globals:globals, globalsType: typeof(Globals)).Result : scriptState.ContinueWithAsync(code, options).Result;
@@ -50,12 +43,12 @@ public class ScriptRunner
         public object selection;
     }
 
-    public static object Execute(string code)
+    public object Execute(string code)
     {
         return Execute(code, null);
     }
 
-    private static ScriptOptions DoStandardImports(ScriptOptions options)
+    private ScriptOptions DoStandardImports(ScriptOptions options)
     {
         options = options.AddImports("UnityEngine", "System.Collections", "System.Collections.Generic");
 
@@ -64,7 +57,7 @@ public class ScriptRunner
         return options;
     }
 
-    private static ScriptOptions LoadAllDllsInFolder(ScriptOptions options, string directory)
+    private ScriptOptions LoadAllDllsInFolder(ScriptOptions options, string directory)
     {
         foreach (string file in Directory.EnumerateFiles(directory))
         {
@@ -73,10 +66,5 @@ public class ScriptRunner
         }
         return options;
     }
-
-    public static void ResetSession()
-    {
-        scriptState = null;
-        options = null;
-    }
+    
 }
