@@ -150,16 +150,12 @@ public class AutocompleteRunner
         return references;
     }
     
-    public string GetLastToken(string text, List<ScriptVariable> otherVars, int position)
+    public string GetLastToken(string text,  int position)
     {
-        string preword = "public GameObject selection;";
-        foreach (ScriptVariable var in otherVars)
-        {
-            preword += "public " + var.Type + " " + var.Name + ";";
-        }
+        
 
-        text = preword + text;
-        position += preword.Length;
+        text = environment + text;
+        position += environment.Length;
         var host = MefHostServices.Create(MefHostServices.DefaultAssemblies);
 
         var workspace = new AdhocWorkspace(host);
