@@ -75,7 +75,7 @@ public class AutocompleteRunner
     {
         await Task.Run(() => {
 
-            completions = new List<CompletionItem>(fullCompletionList.Where<CompletionItem>(x => x.FilterText.ToLower() == lastToken.ToLower()));
+            completions = Filter(fullCompletionList, lastToken);
             onCompletionsUpdate?.Invoke(completions);
 
             if (token.IsCancellationRequested)
@@ -134,7 +134,8 @@ public class AutocompleteRunner
             if (results.Result != null)
             {
                 fullCompletionList = new List<CompletionItem>(results.Result.Items);
-                filteredItems = new List<CompletionItem>(completionService.FilterItems(scriptDocument, results.Result.Items, currentToken.ToString()));
+                filteredItems = Filter(fullCompletionList, lastToken);
+                //filteredItems = new List<CompletionItem>(completionService.FilterItems(scriptDocument, results.Result.Items, currentToken.ToString()));
             }
 
             completions = filteredItems;
@@ -198,5 +199,13 @@ public class AutocompleteRunner
         return currentToken.ToString();
     }
 
-    
+    private List<CompletionItem> Filter(List<CompletionItem> fullList, string filter)
+    {
+        List<CompletionItem> completions = new List<CompletionItem>();
+        if (filter != ".")
+            completions = new List<CompletionItem>(fullList.Where<CompletionItem>(x => x.FilterText.ToLower().StartsWith(filter.ToLower())));
+        else
+            completions = fullList;
+        return completions;
+    }
 }
