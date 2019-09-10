@@ -70,7 +70,8 @@ public class ScriptRunner
     public List<ScriptVariable> GetCurrentVariables()
     {
         List<ScriptVariable> variables = new List<ScriptVariable>();
-        variables.AddRange(scriptState.Variables);
+        if (scriptState != null)
+            variables.AddRange(scriptState.Variables);
         return variables;
     }
 
