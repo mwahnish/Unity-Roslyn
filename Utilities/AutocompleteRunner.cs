@@ -27,9 +27,13 @@ public class AutocompleteRunner
     List<MetadataReference> references;
 
     public List<CompletionItem> completions { get; private set; }
+    private List<CompletionItem> fullCompletionList = new List<CompletionItem>();
 
     Task potentialsTask;
     CancellationTokenSource tokenSource;
+    private string environment = "";
+
+    private string lastToken = "";
 
     public AutocompleteRunner()
     {
@@ -45,30 +49,37 @@ public class AutocompleteRunner
         completions = new List<CompletionItem>();
     }
 
-    public void LoadPotentials(string text, int position, List<ScriptVariable> otherVars)
+    public void LoadVariables(List<ScriptVariable> otherVars)
+    {
+        string preword = "public GameObject selection;";
+        foreach (ScriptVariable var in otherVars)
+        {
+            preword += "public " + var.Type + " " + var.Name + ";";
+        }
+        environment = preword;
+    }
+
+    public void LoadPotentials(string text, int position)
     {
         if (potentialsTask != null && tokenSource != null)
             tokenSource.Cancel();
 
         tokenSource = new CancellationTokenSource();
         CancellationToken token = tokenSource.Token;
-        potentialsTask = GetPotentials(text, position, otherVars,token);
+        potentialsTask = GetPotentials(text, position,token);
     }
 
-    private async Task GetPotentials(string text, int position, List<ScriptVariable> otherVars, CancellationToken token)
+    private async Task GetPotentials(string text, int position, CancellationToken token)
     {
         await Task.Run(() => {
-            string preword = "public GameObject selection;";
-            foreach (ScriptVariable var in otherVars)
-            {
-                preword += "public " + var.Type + " " + var.Name + ";";
-            }
+
+            completions = new List<CompletionItem>(fullCompletionList.Where<CompletionItem>(x => x.FilterText.ToLower() == lastToken.ToLower()));
 
             if (token.IsCancellationRequested)
                 return;
 
-            text = preword + text;
-            position += preword.Length;
+            text = environment + text;
+            position += environment.Length;
             var host = MefHostServices.Create(MefHostServices.DefaultAssemblies);
             
             var workspace = new AdhocWorkspace(host);
@@ -109,13 +120,19 @@ public class AutocompleteRunner
             tree.Wait();
 
             SyntaxToken currentToken= tree.Result.FindToken(Mathf.Clamp( position-1, 0, int.MaxValue));
-            
+            lastToken = currentToken.ToString();
+
+
             Task<CompletionList> results =  completionService.GetCompletionsAsync(scriptDocument, Mathf.Clamp(position, 0, int.MaxValue),cancellationToken:token);
 
             results.Wait();
             List<CompletionItem> filteredItems = new List<CompletionItem>();
+
             if (results.Result != null)
-                filteredItems = new List<CompletionItem>( completionService.FilterItems(scriptDocument, results.Result.Items, currentToken.ToString()));
+            {
+                fullCompletionList = new List<CompletionItem>(results.Result.Items);
+                filteredItems = new List<CompletionItem>(completionService.FilterItems(scriptDocument, results.Result.Items, currentToken.ToString()));
+            }
 
             completions = filteredItems;
         });
