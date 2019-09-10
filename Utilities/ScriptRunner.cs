@@ -66,5 +66,12 @@ public class ScriptRunner
         }
         return options;
     }
-    
+
+    public List<ScriptVariable> GetCurrentVariables()
+    {
+        List<ScriptVariable> variables = new List<ScriptVariable>();
+        variables.AddRange(scriptState.Variables);
+        return variables;
+    }
+
 }
