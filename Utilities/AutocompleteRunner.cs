@@ -35,6 +35,8 @@ public class AutocompleteRunner
 
     private string lastToken = "";
 
+    public System.Action<List<CompletionItem>> onCompletionsUpdate;
+
     public AutocompleteRunner()
     {
 
@@ -74,6 +76,7 @@ public class AutocompleteRunner
         await Task.Run(() => {
 
             completions = new List<CompletionItem>(fullCompletionList.Where<CompletionItem>(x => x.FilterText.ToLower() == lastToken.ToLower()));
+            onCompletionsUpdate?.Invoke(completions);
 
             if (token.IsCancellationRequested)
                 return;
@@ -135,6 +138,7 @@ public class AutocompleteRunner
             }
 
             completions = filteredItems;
+            onCompletionsUpdate?.Invoke(completions);
         });
         
     }
