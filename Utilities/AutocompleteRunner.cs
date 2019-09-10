@@ -10,6 +10,7 @@ using UnityEngine;
 using System.Linq;
 using System.IO;
 using UnityEditor;
+using Microsoft.CodeAnalysis.Scripting;
 
 public class AutocompleteRunner
 {
@@ -37,9 +38,15 @@ public class AutocompleteRunner
 
     }
 
-    public async void GetParameters(string text, int position, System.Action<List<CompletionItem>> result)
+    public async void GetParameters(string text, int position, List<ScriptVariable> otherVars, System.Action<List<CompletionItem>> result)
     {
         string preword = "public GameObject selection;";
+        foreach(ScriptVariable var in otherVars)
+        {
+            preword += "public " + var.Type + " " + var.Name + ";";
+        }
+
+
         text = preword + text ;
         position += preword.Length;
         await Task.Run(() => {
@@ -97,9 +104,14 @@ public class AutocompleteRunner
         return references;
     }
     
-    public string GetLastToken(string text, int position)
+    public string GetLastToken(string text, List<ScriptVariable> otherVars, int position)
     {
         string preword = "public GameObject selection;";
+        foreach (ScriptVariable var in otherVars)
+        {
+            preword += "public " + var.Type + " " + var.Name + ";";
+        }
+
         text = preword + text;
         position += preword.Length;
         var host = MefHostServices.Create(MefHostServices.DefaultAssemblies);
