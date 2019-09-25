@@ -1,11 +1,13 @@
 {
-    "name": "com.abxy.rosyln",
-    "displayName": "Roslyn libraries in Unity",
-    "version": "0.0.1",
-    "unity": "2018.1",
-    "description": "It's Roslyn!",
-    "keywords": [
-        "csharp"
-    ],
-    "category": "Unity"
+  "name": "com.abxy.roslyn",
+  "displayName": "\".NET Compiler Platform (\"Roslyn\")\"",
+  "version": "0.0.1",
+  "unity": "2018.1",
+  "description": "The Roslyn .NET compiler provides C# and Visual Basic languages with rich code analysis APIs",
+  "keywords": [
+    "csharp",
+    "roslyn",
+    "compiler"
+  ],
+  "category": "Coding Tools"
 }
